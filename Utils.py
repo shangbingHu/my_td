@@ -22,25 +22,28 @@ class Http(Singleton):
 
 class Web(object):
     @staticmethod
-    def do_get(url, headers=None):
+    def do_get(url, headers = None):
+               #headers={'User-Agent': "Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1"}):
         response = None
         content = None
         retry_time = 0
         http = httplib2.Http()
+        #print("Start")
         while(True):
             try:
-                if retry_time > 5:
+                if retry_time > 1:
                     raise Exception("bad server or network")
                 response, content = http.request(url, "GET", headers=headers)
+                #print response, content
                 break
             except Exception, e:
-                time.sleep(120)
+                time.sleep(2)
                 retry_time += 1
                 print "Error: %s" % str(e)
                 print "retry for %s time" % retry_time
             finally:
                 pass
-        return response, content.decode('gbk').encode('utf-8')
+        return response, content
 
     @staticmethod
     def do_post(url, headers=None, data={}):
