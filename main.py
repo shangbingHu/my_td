@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import sys
 import Utils
 
 url = "http://otcbtc.com"
@@ -151,4 +152,9 @@ def get_coin_to_coin_price(rsp, trade_type):
 
 
 if __name__ == "__main__":
+    argv = sys.argv
+    if len(argv) <= 1:
+        pass
+    else:
+        currency_types = [argv[1]]
     main()
