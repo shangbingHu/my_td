@@ -41,29 +41,31 @@ def parse_both(ctype, btype):
         ctype=ctype, clp=buy_lowest_price, chp=sell_highest_price,
         btype=btype, blp=base_buy_lowest_price, bhp=base_sell_highest_price)
     )
-    sell_rate = sell_highest_price / base_buy_lowest_price
-    buy_rate = buy_lowest_price / base_sell_highest_price
-    sell_msg = "sell rate: {rate1} | c2c sell rate: {rate2}".format(rate1=sell_rate, rate2=red_buy_lowest_price)
-    buy_msg = "buy rate: {rate1} | c2c buy rate: {rate2}".format(rate1=buy_rate, rate2=green_sell_highest_price)
-    if sell_rate > red_buy_lowest_price:
-        print("You should buy {good1}({price1})  and sell {good2}({price2}) ==> {msg}".format(
-            good1=btype, price1=base_buy_lowest_price, good2=ctype, price2=sell_highest_price, msg=sell_msg))
-        print("Example: buy {good1} with 10000 at {price1} multi {rate1} and sell {good} at {price2} == {total}, "
-              "get {money}".format(good1=btype, price1=base_buy_lowest_price, rate1=red_buy_lowest_price, good=ctype,
-                                   price2=sell_highest_price,
-                                   total=(10000/base_buy_lowest_price/red_buy_lowest_price*sell_highest_price),
-                                   money=(10000/base_buy_lowest_price/red_buy_lowest_price*sell_highest_price) - 10000
-        ))
-    if buy_rate < green_sell_highest_price:
-        print("You should buy {good1}({price1}) and sell {good2}({price2}) ==> {msg}".format(
-            good1=ctype, price1=buy_lowest_price, good2=btype, price2=base_sell_highest_price, msg=buy_msg))
-        print("Example: buy {good} with 10000 at {price1} multi {rate1} and sell {good1} at {price2} == {total}, "
-              "get {money}".format(price1=buy_lowest_price, rate1=green_sell_highest_price, good=ctype, good1=btype,
-                                   price2=base_sell_highest_price,
-                                   total=(10000/buy_lowest_price*green_sell_highest_price*base_sell_highest_price),
-                                   money=(10000/buy_lowest_price*green_sell_highest_price*base_sell_highest_price)-10000
-        ))
-
+    try:
+        sell_rate = sell_highest_price / base_buy_lowest_price
+        buy_rate = buy_lowest_price / base_sell_highest_price
+        sell_msg = "sell rate: {rate1} | c2c sell rate: {rate2}".format(rate1=sell_rate, rate2=red_buy_lowest_price)
+        buy_msg = "buy rate: {rate1} | c2c buy rate: {rate2}".format(rate1=buy_rate, rate2=green_sell_highest_price)
+        if sell_rate > red_buy_lowest_price:
+            print("You should buy {good1}({price1})  and sell {good2}({price2}) ==> {msg}".format(
+                good1=btype, price1=base_buy_lowest_price, good2=ctype, price2=sell_highest_price, msg=sell_msg))
+            print("Example: buy {good1} with 10000 at {price1} multi {rate1} and sell {good} at {price2} == {total}, "
+                  "get {money}".format(good1=btype, price1=base_buy_lowest_price, rate1=red_buy_lowest_price, good=ctype,
+                                       price2=sell_highest_price,
+                                       total=(10000/base_buy_lowest_price/red_buy_lowest_price*sell_highest_price),
+                                       money=(10000/base_buy_lowest_price/red_buy_lowest_price*sell_highest_price) - 10000
+            ))
+        if buy_rate < green_sell_highest_price:
+            print("You should buy {good1}({price1}) and sell {good2}({price2}) ==> {msg}".format(
+                good1=ctype, price1=buy_lowest_price, good2=btype, price2=base_sell_highest_price, msg=buy_msg))
+            print("Example: buy {good} with 10000 at {price1} multi {rate1} and sell {good1} at {price2} == {total}, "
+                  "get {money}".format(price1=buy_lowest_price, rate1=green_sell_highest_price, good=ctype, good1=btype,
+                                       price2=base_sell_highest_price,
+                                       total=(10000/buy_lowest_price*green_sell_highest_price*base_sell_highest_price),
+                                       money=(10000/buy_lowest_price*green_sell_highest_price*base_sell_highest_price)-10000
+            ))
+    except Exception, e:
+        print e
 
 def parse(ctype):
     time.sleep(10)
