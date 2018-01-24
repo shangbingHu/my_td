@@ -4,6 +4,7 @@ import time
 import sys
 import Utils
 from lxml import etree
+from copy import deepcopy
 
 url = "http://otcbtc.com"
 
@@ -16,6 +17,10 @@ currency_types = ["BTC", "EOS", "OTB", "BIG", "BNB", "DEW", "GXS", "IOST", "KIN"
 #currency_types = ["ETH", "OTB"]
 #currency_types = ["EOS"]
 BASE_TYPE = "ETH"
+SLEEP_SEC = 2
+SELL = "buy"
+BUY = "sell"
+# no matther buy or sell, for me, it's the action not the pulishing
 
 
 def main():
@@ -24,21 +29,21 @@ def main():
             parse_both(currency, BASE_TYPE)
 
 def parse_both(ctype, btype):
-    cnt = get_money_trade_response("sell", ctype)
+    cnt = get_money_trade_response(BUY, ctype)
     buy_lowest_price = get_buy_lowest_price(cnt)
     time.sleep(2)
-    cnt = get_money_trade_response("buy", ctype)
+    cnt = get_money_trade_response(SELL, ctype)
     sell_highest_price = get_sell_highest_price(cnt)
     time.sleep(2)
-    cnt = get_money_trade_response("sell", btype)
+    cnt = get_money_trade_response(BUY, btype)
     base_buy_lowest_price = get_buy_lowest_price(cnt)
     time.sleep(2)
-    cnt = get_money_trade_response("buy", btype)
+    cnt = get_money_trade_response(SELL, btype)
     base_sell_highest_price = get_sell_highest_price(cnt)
     time.sleep(2)
     cnt = get_coin_to_coin_response(ctype)
-    red_buy_lowest_price = get_coin_to_coin_price(cnt, "buy")
-    green_sell_highest_price = get_coin_to_coin_price(cnt, "sell")
+    red_buy_lowest_price = get_coin_to_coin_price(cnt, SELL)
+    green_sell_highest_price = get_coin_to_coin_price(cnt, BUY)
     print("[{ctype}] L: {clp} - H: {chp} | [{btype}] L: {blp} - H: {bhp}".format(
         ctype=ctype, clp=buy_lowest_price, chp=sell_highest_price,
         btype=btype, blp=base_buy_lowest_price, bhp=base_sell_highest_price)
@@ -71,12 +76,12 @@ def parse_both(ctype, btype):
 
 def parse(ctype):
     time.sleep(10)
-    cnt = get_money_trade_response("sell", ctype)
+    cnt = get_money_trade_response(BUY, ctype)
     buy_lowest_price = get_buy_lowest_price(cnt)
     buy_lowest_owner = get_buy_lowest_owner(cnt)
     buy_total_page_count = get_total_page(cnt)
     time.sleep(2)
-    cnt = get_money_trade_response("buy", ctype)
+    cnt = get_money_trade_response(SELL, ctype)
     sell_highest_price = get_sell_highest_price(cnt)
     sell_highest_owner = get_sell_highest_owner(cnt)
     sell_total_page_count = get_total_page(cnt)
@@ -89,10 +94,11 @@ def parse(ctype):
 
 def do_request(url):
     rsp, cnt = Utils.Web.do_get(url)
+    #time.sleep(SLEEP_SEC)
     return cnt
 
 
-def get_money_trade_response(tade_type="buy", curr_type="EOS"):
+def get_money_trade_response(tade_type=SELL, curr_type="EOS"):
     real_url = os.path.join(url, trade_suffix).format(trade_type=tade_type, curr_type=curr_type)
     return do_request(real_url)
 
@@ -147,7 +153,7 @@ def get_coin_to_coin_price(rsp, trade_type):
         if "gon.orderbook" in value:
             found = True
             break
-    key_word = "asks" if trade_type == "buy" else "bids"
+    key_word = "asks" if trade_type == SELL else "bids"
     return float(re.search("%s\":\[\[\"(\d+\.\d+)" % key_word, rsp_list[index]).groups()[0]) if found else 0.0
 
 
@@ -166,6 +172,7 @@ def parse_money_to_coin_page(ctn):
     return result
 
 
+#[[asks_info], [bids_info]]
 def parse_coin_to_coin_page(ctn):
     result = [[], []]
     def parse_price_and_count(pcinfo):
@@ -196,22 +203,33 @@ class Strategy(object):
     def __init__(self, btype, ctype):
         self.btype = btype
         self.ctype = ctype
-        self.btype_money_to_coin_buy_info = self.get_money_to_coin_trade_info("buy", self.btype)
-        self.btype_money_to_coin_sell_info = self.get_money_to_coin_trade_info("sell", self.btype)
-        self.ctype_money_to_coin_buy_info = self.get_money_to_coin_trade_info("buy", self.ctype)
-        self.ctype_money_to_coin_sell_info = self.get_money_to_coin_trade_info("sell", self.ctype)
+        self.btype_money_to_coin_buy_info = self.get_money_to_coin_trade_info(BUY, self.btype)
+        self.btype_money_to_coin_sell_info = self.get_money_to_coin_trade_info(SELL, self.btype)
+        self.ctype_money_to_coin_buy_info = self.get_money_to_coin_trade_info(BUY, self.ctype)
+        self.ctype_money_to_coin_sell_info = self.get_money_to_coin_trade_info(SELL, self.ctype)
         self.coin_to_coin_info = self.get_coin_to_coin_info(self.ctype)
 
-    # [(price1, count1), (price2, count2)]
+    # for sell, the format is: [(price1, count1), (price2, count2)]
+    # for buy, the format is: [(price1, total_price1), (price2, total_price2)]
     def get_money_to_coin_trade_info(self, trade_type, curr_type):
         content = get_money_trade_response(trade_type, curr_type)
         return parse_money_to_coin_page(content)
-
 
     # [[(sell_price1, sell_count1), (sell_price2, sell_count2)], [(buy_price1, buy_count1), (buy_price2, buy_count2)]]
     def get_coin_to_coin_info(self, curr_type):
         content = get_coin_to_coin_response(curr_type)
         return parse_coin_to_coin_page(content)
+
+    # clean some unused price & count info
+    def clean_data_method(self, trade_type, trade_info):
+        return trade_info
+
+    def do_clean(self):
+        self.btype_money_to_coin_buy_info = self.clean_data_method(BUY, self.btype_money_to_coin_buy_info)
+        self.btype_money_to_coin_sell_info = self.clean_data_method(SELL, self.btype_money_to_coin_sell_info)
+        self.ctype_money_to_coin_buy_info = self.clean_data_method(BUY, self.ctype_money_to_coin_buy_info)
+        self.ctype_money_to_coin_sell_info = self.clean_data_method(SELL, self.ctype_money_to_coin_sell_info)
+        self.coin_to_coin_info = self.clean_data_method(self.coin_to_coin_info)
 
     def papar_trade(self):
         pass
@@ -224,12 +242,36 @@ class RateStrategy(Strategy):
     def __init__(self, btype, ctype):
         super(RateStrategy, self).__init__(btype, ctype)
 
+    def clean_data_method(self, trade_type, trade_info):
+        super(RateStrategy, self).clean_data_method(trade_type, trade_info)
+        new_trade_info = deepcopy(trade_info)
+        if len(trade_info) == 1:
+            if trade_type == SELL:
+                for index, info in enumerate(trade_info):
+                    if info[0] * info[1] < 2000.0:
+                        del new_trade_info[index]
+            else:
+                for index, info in enumerate(trade_info):
+                    if info[1] < 2000.0:
+                        del new_trade_info[index]
+            return new_trade_info
+        elif len(trade_info) == 2:
+            new_buy_info = deepcopy(new_trade_info[0])
+            for index, info in enumerate(new_trade_info[0]):
+                if info[0] * info[1] * 6000 < 300:
+                    del new_buy_info[index]
+            new_sell_info = deepcopy(new_trade_info[1])
+            for index, info in enumerate(new_trade_info[1]):
+                if info[0] * info[1] * 6000 < 300:
+                    del new_buy_info[index]
+            new_trade_info = [new_buy_info, new_sell_info]
+        return new_trade_info
+
 
     def papar_trade(self):
         super(RateStrategy, self).papar_trade()
         print self.coin_to_coin_info[0][0]
         print self.coin_to_coin_info[1][0]
-
 
 
 def test_main():
