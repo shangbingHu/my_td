@@ -3,6 +3,7 @@ import re
 import time
 import sys
 import Utils
+from lxml import etree
 
 url = "http://otcbtc.com"
 
@@ -14,13 +15,13 @@ currency_types = ["BTC", "EOS", "OTB", "BIG", "BNB", "DEW", "GXS", "IOST", "KIN"
 
 #currency_types = ["ETH", "OTB"]
 #currency_types = ["EOS"]
-base_type = "ETH"
+BASE_TYPE = "ETH"
 
 
 def main():
     while True:
         for currency in currency_types:
-            parse_both(currency, base_type)
+            parse_both(currency, BASE_TYPE)
 
 def parse_both(ctype, btype):
     cnt = get_money_trade_response("sell", ctype)
@@ -150,6 +151,92 @@ def get_coin_to_coin_price(rsp, trade_type):
     return float(re.search("%s\":\[\[\"(\d+\.\d+)" % key_word, rsp_list[index]).groups()[0]) if found else 0.0
 
 
+def parse_money_to_coin_page(ctn):
+    result = []
+    try:
+        tree = etree.HTML(ctn)
+        nodes = tree.xpath("//li[@class='price']/text()")
+        prices = [float(str(price).strip().replace(",", "")) for price in nodes if str(price).strip()]
+        nodes = tree.xpath("//li[@class='minimum-amount']/text()")
+        counts = [float(str(count).strip().replace(",", "").splitlines()[2].strip()) for count in nodes if str(count).strip()]
+        price_with_count_list = zip(prices, counts)
+        result = price_with_count_list
+    except Exception, e:
+        print e
+    return result
+
+
+def parse_coin_to_coin_page(ctn):
+    result = [[], []]
+    def parse_price_and_count(pcinfo):
+        info = [float(item.strip("[").strip("]").strip('"')) for item in pcinfo.split(",")]
+        price = [value for (index, value) in enumerate(info) if index % 2 == 0]
+        count = [value for (index, value) in enumerate(info) if index % 2]
+        return zip(price, count)
+    try:
+        content = ctn
+        start = content.index("gon.orderbook")
+        end = content.index("gon.trades")
+        content = content[start + 15:end - 2]
+
+        start = content.index("asks")
+        end = content.index("bids")
+
+        asks = content[start + 7:end - 3]
+        bids = content[end + 7:-1]
+        asks_price_with_count_list = parse_price_and_count(asks)
+        bids_price_with_count_list = parse_price_and_count(bids)
+        result = asks_price_with_count_list, bids_price_with_count_list
+    except Exception, e:
+        print e
+    return result
+
+
+class Strategy(object):
+    def __init__(self, btype, ctype):
+        self.btype = btype
+        self.ctype = ctype
+        self.btype_money_to_coin_buy_info = self.get_money_to_coin_trade_info("buy", self.btype)
+        self.btype_money_to_coin_sell_info = self.get_money_to_coin_trade_info("sell", self.btype)
+        self.ctype_money_to_coin_buy_info = self.get_money_to_coin_trade_info("buy", self.ctype)
+        self.ctype_money_to_coin_sell_info = self.get_money_to_coin_trade_info("sell", self.ctype)
+        self.coin_to_coin_info = self.get_coin_to_coin_info(self.ctype)
+
+    # [(price1, count1), (price2, count2)]
+    def get_money_to_coin_trade_info(self, trade_type, curr_type):
+        content = get_money_trade_response(trade_type, curr_type)
+        return parse_money_to_coin_page(content)
+
+
+    # [[(sell_price1, sell_count1), (sell_price2, sell_count2)], [(buy_price1, buy_count1), (buy_price2, buy_count2)]]
+    def get_coin_to_coin_info(self, curr_type):
+        content = get_coin_to_coin_response(curr_type)
+        return parse_coin_to_coin_page(content)
+
+    def papar_trade(self):
+        pass
+
+    def send_order(self):
+        pass
+
+
+class RateStrategy(Strategy):
+    def __init__(self, btype, ctype):
+        super(RateStrategy, self).__init__(btype, ctype)
+
+
+    def papar_trade(self):
+        super(RateStrategy, self).papar_trade()
+        print self.coin_to_coin_info[0][0]
+        print self.coin_to_coin_info[1][0]
+
+
+
+def test_main():
+    stg = RateStrategy(BASE_TYPE, "OTB")
+    stg.papar_trade()
+
+
 
 if __name__ == "__main__":
     argv = sys.argv
@@ -157,4 +244,4 @@ if __name__ == "__main__":
         pass
     else:
         currency_types = [argv[1]]
-    main()
+    test_main()
