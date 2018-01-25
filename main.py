@@ -270,8 +270,30 @@ class RateStrategy(Strategy):
 
     def papar_trade(self):
         super(RateStrategy, self).papar_trade()
-        print self.coin_to_coin_info[0][0]
-        print self.coin_to_coin_info[1][0]
+        self.do_clean()
+        red_lowest_rate = self.coin_to_coin_info[0][0][0]
+        green_highest_rate = self.coin_to_coin_info[0][0][0]
+        base_buy_lowest_price = self.btype_money_to_coin_buy_info[0][0]
+        base_sell_hightest_price = self.btype_money_to_coin_sell_info[0][0]
+        curr_buy_lowest_price = self.ctype_money_to_coin_buy_info[0][0]
+        curr_sell_highest_price = self.ctype_money_to_coin_sell_info[0][0]
+
+        logic_red_lowest_rate = curr_sell_highest_price / base_buy_lowest_price
+        logic_green_highest_rate = curr_buy_lowest_price / base_sell_hightest_price
+        print("base_buy_lowest_price: %s | curr_sell_highest_price: %s | red_lowest_rate at the right time: %s" % (
+            base_buy_lowest_price, curr_sell_highest_price, red_lowest_rate
+        ))
+        print("If you want get trade to be done, you should set the red rate lower than %s" % logic_red_lowest_rate)
+        print("--------")
+        print("base_sell_hightest_price: %s | curr_buy_highest_price: %s | green_highest_rate at the right time: %s" % (
+            base_sell_hightest_price, curr_buy_lowest_price, green_highest_rate
+        ))
+        print("If you want get trade to be done, you should set the green rate higher than %s" % logic_green_highest_rate)
+
+        print(green_highest_rate, logic_green_highest_rate, logic_red_lowest_rate, red_lowest_rate)
+
+
+
 
 
 def test_main():
