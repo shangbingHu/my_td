@@ -229,7 +229,7 @@ class Strategy(object):
         self.btype_money_to_coin_sell_info = self.clean_data_method(SELL, self.btype_money_to_coin_sell_info)
         self.ctype_money_to_coin_buy_info = self.clean_data_method(BUY, self.ctype_money_to_coin_buy_info)
         self.ctype_money_to_coin_sell_info = self.clean_data_method(SELL, self.ctype_money_to_coin_sell_info)
-        self.coin_to_coin_info = self.clean_data_method(self.coin_to_coin_info)
+        self.coin_to_coin_info = self.clean_data_method(SELL, self.coin_to_coin_info)
 
     def papar_trade(self):
         pass
@@ -272,7 +272,7 @@ class RateStrategy(Strategy):
         super(RateStrategy, self).papar_trade()
         self.do_clean()
         red_lowest_rate = self.coin_to_coin_info[0][0][0]
-        green_highest_rate = self.coin_to_coin_info[0][0][0]
+        green_highest_rate = self.coin_to_coin_info[1][0][0]
         base_buy_lowest_price = self.btype_money_to_coin_buy_info[0][0]
         base_sell_hightest_price = self.btype_money_to_coin_sell_info[0][0]
         curr_buy_lowest_price = self.ctype_money_to_coin_buy_info[0][0]
