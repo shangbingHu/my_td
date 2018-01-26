@@ -245,25 +245,31 @@ class RateStrategy(Strategy):
     def clean_data_method(self, trade_type, trade_info):
         super(RateStrategy, self).clean_data_method(trade_type, trade_info)
         new_trade_info = deepcopy(trade_info)
+        counter = 0
         if len(trade_info) == 1:
             if trade_type == SELL:
                 for index, info in enumerate(trade_info):
                     if info[0] * info[1] < 2000.0:
-                        del new_trade_info[index]
+                        del new_trade_info[index + counter]
+                        counter += 1
             else:
                 for index, info in enumerate(trade_info):
                     if info[1] < 2000.0:
-                        del new_trade_info[index]
+                        del new_trade_info[index + counter]
+                        counter += 1
+
             return new_trade_info
         elif len(trade_info) == 2:
             new_buy_info = deepcopy(new_trade_info[0])
             for index, info in enumerate(new_trade_info[0]):
                 if info[0] * info[1] * 6000 < 300:
-                    del new_buy_info[index]
+                    del new_buy_info[index + counter]
+                    counter += 1
             new_sell_info = deepcopy(new_trade_info[1])
             for index, info in enumerate(new_trade_info[1]):
                 if info[0] * info[1] * 6000 < 300:
-                    del new_buy_info[index]
+                    del new_sell_info[index + counter]
+                    counter += 1
             new_trade_info = [new_buy_info, new_sell_info]
         return new_trade_info
 
