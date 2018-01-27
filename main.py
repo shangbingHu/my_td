@@ -250,12 +250,12 @@ class RateStrategy(Strategy):
             if trade_type == SELL:
                 for index, info in enumerate(trade_info):
                     if info[0] * info[1] < 2000.0:
-                        del new_trade_info[index + counter]
+                        del new_trade_info[index - counter]
                         counter += 1
             else:
                 for index, info in enumerate(trade_info):
                     if info[1] < 2000.0:
-                        del new_trade_info[index + counter]
+                        del new_trade_info[index - counter]
                         counter += 1
 
             return new_trade_info
@@ -263,12 +263,12 @@ class RateStrategy(Strategy):
             new_buy_info = deepcopy(new_trade_info[0])
             for index, info in enumerate(new_trade_info[0]):
                 if info[0] * info[1] * 6000 < 300:
-                    del new_buy_info[index + counter]
+                    del new_buy_info[index - counter]
                     counter += 1
             new_sell_info = deepcopy(new_trade_info[1])
             for index, info in enumerate(new_trade_info[1]):
                 if info[0] * info[1] * 6000 < 300:
-                    del new_sell_info[index + counter]
+                    del new_sell_info[index - counter]
                     counter += 1
             new_trade_info = [new_buy_info, new_sell_info]
         return new_trade_info
@@ -303,8 +303,9 @@ class RateStrategy(Strategy):
 
 
 def test_main():
-    stg = RateStrategy(BASE_TYPE, "OTB")
-    stg.papar_trade()
+    while True:
+        stg = RateStrategy(BASE_TYPE, "OTB")
+        stg.papar_trade()
 
 
 
