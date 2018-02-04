@@ -14,7 +14,7 @@ currency_types = ["BTC", "EOS", "OTB", "BIG", "BNB", "DEW", "GXS", "IOST", "KIN"
 
 #currency_types = ["ETH", "OTB"]
 #currency_types = ["EOS"]
-base_type = "ETH"
+base_type = "BTC"
 
 
 def main():
@@ -147,7 +147,10 @@ def get_coin_to_coin_price(rsp, trade_type):
             found = True
             break
     key_word = "asks" if trade_type == "buy" else "bids"
-    return float(re.search("%s\":\[\[\"(\d+\.\d+)" % key_word, rsp_list[index]).groups()[0]) if found else 0.0
+    try:
+        return float(re.search("%s\":\[\[\"(\d+\.\d+)" % key_word, rsp_list[index]).groups()[0]) if found else 0.0
+    except:
+        return 0.0
 
 
 
