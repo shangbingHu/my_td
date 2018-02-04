@@ -7,8 +7,10 @@ import Utils
 url = "http://otcbtc.com"
 
 trade_suffix = "{trade_type}_offers?currency={curr_type}&fiat_currency=cny&payment_type=all"
-currency_types = ["BTC", "EOS", "OTB", "BIG", "BNB", "DEW", "GXS", "IOST", "KIN", "NAS",
-                  "SWFTC", "TNB", "USDT"]
+currency_file = "main_curr"
+currency_types = [line.strip() for line in open(currency_file).readlines()]
+
+#currency_types = ["BTC", "EOS", "OTB", "BIG", "BNB", "DEW", "GXS", "IOST", "KIN", "NAS", "SWFTC", "TNB", "USDT"]
 
 #currency_types = ["ETH", "EOS", "OTB", "BIG", "BNB", "DEW", "GXS", "KIN", "TNB", "USDT"]
 
@@ -18,6 +20,8 @@ base_type = "BTC"
 
 
 def main():
+    print base_type, currency_file
+    currency_types = [line.strip() for line in open(currency_file).readlines()]
     while True:
         for currency in currency_types:
             parse_both(currency, base_type)
@@ -156,8 +160,10 @@ def get_coin_to_coin_price(rsp, trade_type):
 
 if __name__ == "__main__":
     argv = sys.argv
-    if len(argv) <= 1:
+    base_type = argv[1]
+    print argv
+    if len(argv) <= 2:
         pass
     else:
-        currency_types = [argv[1]]
+        currency_file = argv[2]
     main()
