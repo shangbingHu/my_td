@@ -35,7 +35,7 @@ def parse_both(ctype, btype):
     cnt = get_money_trade_response("buy", btype)
     base_sell_highest_price = get_sell_highest_price(cnt)
     time.sleep(2)
-    cnt = get_coin_to_coin_response(ctype)
+    cnt = get_coin_to_coin_response(ctype, btype)
     red_buy_lowest_price = get_coin_to_coin_price(cnt, "buy")
     green_sell_highest_price = get_coin_to_coin_price(cnt, "sell")
     print("[{ctype}] L: {clp} - H: {chp} | [{btype}] L: {blp} - H: {bhp}".format(
@@ -95,8 +95,8 @@ def get_money_trade_response(tade_type="buy", curr_type="EOS"):
     real_url = os.path.join(url, trade_suffix).format(trade_type=tade_type, curr_type=curr_type)
     return do_request(real_url)
 
-def get_coin_to_coin_response(curr_type):
-    coin_suffix = curr_type.lower() + "eth"
+def get_coin_to_coin_response(curr_type, base_type):
+    coin_suffix = curr_type.lower() + base_type.lower()
     real_url = os.path.join("https://bb.otcbtc.com/exchange/markets/", coin_suffix)
     return do_request(real_url)
 
